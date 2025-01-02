@@ -117,6 +117,34 @@ class TestSearchDirectories(unittest.TestCase):
             for row in results:
                 for value in row.values():
                     self.assertTrue(value, "Found empty value in results")
+        
+        # Also check the missing files CSV
+        missing_file = main_folder / "missing_files.csv"
+        self.assertTrue(missing_file.exists())
+        
+        # Read and verify missing files
+        with open(missing_file, 'r', newline='', encoding='utf-8') as csvfile:
+            reader = csv.DictReader(csvfile)
+            missing_results = list(reader)
+            
+            # Should find 1 missing file (search_folder/notes.txt exists in search_folder 
+            # but wasn't found in the results because it's in the search folder itself)
+            self.assertEqual(len(missing_results), 1)
+            
+            # Verify CSV headers
+            expected_missing_headers = {'File Name', 'Reference Path', 'Status'}
+            self.assertEqual(set(missing_results[0].keys()), expected_missing_headers)
+            
+            # Verify the missing file entry
+            missing_file = missing_results[0]
+            self.assertEqual(missing_file['File Name'], 'notes.txt')
+            self.assertEqual(missing_file['Status'], 'Not found in main folder')
+            self.assertTrue(missing_file['Reference Path'].endswith('search_folder/notes.txt'))
+            
+            # Verify all entries have non-empty values
+            for row in missing_results:
+                for value in row.values():
+                    self.assertTrue(value, "Found empty value in missing files results")
 
 if __name__ == '__main__':
     unittest.main()
